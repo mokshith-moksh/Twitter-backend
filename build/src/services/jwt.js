@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const JWT_SECRET_KEY = "mpvspeop234lg@3msm4";
+const JWT_SECRET_KEY = process.env.JWT_SECRET;
 class JWTService {
     static generateTokenForUser(user) {
         const payload = {

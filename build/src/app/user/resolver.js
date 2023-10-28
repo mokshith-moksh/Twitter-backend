@@ -71,7 +71,7 @@ const extraResolvers = {
             const userRecommended = [];
             for (const followings of myFollowings) {
                 for (const followingOfFollowedUser of followings.following.followers) {
-                    if (followingOfFollowedUser.followingId !== context.user.id && myFollowings.findIndex(e => (e === null || e === void 0 ? void 0 : e.followingId) === followingOfFollowedUser.following.id) < 0) {
+                    if (followingOfFollowedUser.following.id !== context.user.id && myFollowings.findIndex(e => (e === null || e === void 0 ? void 0 : e.followingId) === followingOfFollowedUser.following.id) < 0) {
                         userRecommended.push(followingOfFollowedUser.following);
                     }
                 }
