@@ -8,8 +8,11 @@ import { GraphqlContext } from "../interfaces";
 import JWTService from "../services/jwt";
 import { Tweet } from "./tweet";
 
+
+
 export async function initServer() {
   const app = express();
+  app.get('/',(req,res)=>res.status(200).json({message: 'OK'}));
   const graphqlServer = new ApolloServer<GraphqlContext>({
     typeDefs: `
       ${User.types}
