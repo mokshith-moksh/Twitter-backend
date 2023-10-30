@@ -13,6 +13,7 @@ type User{
   followers:[User]
   following:[User]
   recommendedUsers:[User] 
+  likedTweets: [Tweet]
   tweets: [Tweet]
 } 
 

@@ -50,6 +50,7 @@ const queries = {
   getAllTweets: async (parent: any, args: any, context: any) => {
     return await prismaClient.tweet.findMany();
   },
+  //geting signed url
   getSignedURLForTweet: async (
     parent: any,
     { imageType, imageName }: { imageType: string; imageName: string },

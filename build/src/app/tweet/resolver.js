@@ -50,6 +50,7 @@ const queries = {
     getAllTweets: (parent, args, context) => __awaiter(void 0, void 0, void 0, function* () {
         return yield db_1.prismaClient.tweet.findMany();
     }),
+    //geting signed url
     getSignedURLForTweet: (parent, { imageType, imageName }, context) => __awaiter(void 0, void 0, void 0, function* () {
         if (!context.user || !context.user.id)
             throw new Error("Unauthenticated");

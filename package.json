@@ -15,7 +15,7 @@
   "devDependencies": {
     "@types/cors": "^2.8.14",
     "@types/jsonwebtoken": "^9.0.3",
-    "prisma": "^5.4.2",
+    "prisma": "^5.5.2",
     "typescript": "^5.2.2"
   },
   "dependencies": {

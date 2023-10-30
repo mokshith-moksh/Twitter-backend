@@ -41,15 +41,15 @@ const extraResolvers = {
             },
         }),
         followers: (parent) => __awaiter(void 0, void 0, void 0, function* () {
-            const result = yield db_1.prismaClient.follower.findMany({
+            const result = yield db_1.prismaClient.follows.findMany({
                 where: { following: { id: parent.id } },
-                include: { followers: true },
+                include: { follower: true },
             });
-            return result.map((el) => el.followers);
+            return result.map((el) => el.follower);
         }),
         following: (parent) => __awaiter(void 0, void 0, void 0, function* () {
-            const result = yield db_1.prismaClient.follower.findMany({
-                where: { followers: { id: parent.id } },
+            const result = yield db_1.prismaClient.follows.findMany({
+                where: { follower: { id: parent.id } },
                 include: { following: true },
             });
             return result.map((el) => el.following);
@@ -60,24 +60,38 @@ const extraResolvers = {
             const cachedValue = yield redis_1.redisClient.get(`RECOMMENDED_USERS:${context.user.id}`);
             if (cachedValue)
                 return JSON.parse(cachedValue);
-            const myFollowings = yield db_1.prismaClient.follower.findMany({
+            const myFollowings = yield db_1.prismaClient.follows.findMany({
                 where: {
-                    followers: { id: context.user.id }
+                    follower: { id: context.user.id },
                 },
                 include: {
-                    following: { include: { followers: { include: { following: true } } } }
-                }
+                    following: {
+                        include: { followers: { include: { following: true } } },
+                    },
+                },
             });
             const userRecommended = [];
             for (const followings of myFollowings) {
                 for (const followingOfFollowedUser of followings.following.followers) {
-                    if (followingOfFollowedUser.following.id !== context.user.id && myFollowings.findIndex(e => (e === null || e === void 0 ? void 0 : e.followingId) === followingOfFollowedUser.following.id) < 0) {
+                    if (followingOfFollowedUser.following.id !== context.user.id &&
+                        myFollowings.findIndex((e) => (e === null || e === void 0 ? void 0 : e.followingId) === followingOfFollowedUser.following.id) < 0) {
                         userRecommended.push(followingOfFollowedUser.following);
                     }
                 }
             }
             yield redis_1.redisClient.set(`RECOMMENDED_USERS:${context.user.id}`, JSON.stringify(userRecommended));
             return userRecommended;
+        }),
+        likedTweets: (parent, _, context) => __awaiter(void 0, void 0, void 0, function* () {
+            if (!context.user)
+                return [];
+            const likedtweets = yield db_1.prismaClient.likes.findMany({
+                where: { userId: context.user.id },
+                include: {
+                    tweet: true,
+                }
+            });
+            return likedtweets.map(tw => tw.tweet);
         })
     },
 };
@@ -94,6 +108,30 @@ const mutations = {
             throw new Error("Unauthenticated user");
         yield user_1.default.unfollowUser(context.user.id, to);
         yield redis_1.redisClient.del(`RECOMMENDED_USERS:${context.user.id}`);
+        return true;
+    }),
+    likeUser: (parent, { to }, context) => __awaiter(void 0, void 0, void 0, function* () {
+        if (!context.user || !context.user.id)
+            throw new Error("Unauthenticated user");
+        yield db_1.prismaClient.likes.create({
+            data: {
+                userId: context.user.id,
+                tweetId: to,
+            },
+        });
+        return true;
+    }),
+    unLikeUser: (parent, { to }, context) => __awaiter(void 0, void 0, void 0, function* () {
+        if (!context.user || !context.user.id)
+            throw new Error("Unauthenticated user");
+        yield db_1.prismaClient.likes.delete({
+            where: {
+                tweetId_userId: {
+                    tweetId: to,
+                    userId: context.user.id,
+                },
+            },
+        });
         return true;
     }),
 };

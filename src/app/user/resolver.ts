@@ -36,45 +36,66 @@ const extraResolvers = {
         },
       }),
     followers: async (parent: User) => {
-      const result = await prismaClient.follower.findMany({
+      const result = await prismaClient.follows.findMany({
         where: { following: { id: parent.id } },
-        include: { followers: true },
+        include: { follower: true },
       });
-      return result.map((el) => el.followers);
+      return result.map((el) => el.follower);
     },
     following: async (parent: User) => {
-      const result = await prismaClient.follower.findMany({
-        where: { followers: { id: parent.id } },
+      const result = await prismaClient.follows.findMany({
+        where: { follower: { id: parent.id } },
         include: { following: true },
       });
       return result.map((el) => el.following);
     },
-    recommendedUsers : async (parent: User,_:any, context: GraphqlContext) => {
-       if(!context.user) return [];
-       const cachedValue = await redisClient.get(`RECOMMENDED_USERS:${context.user.id}`);
+    recommendedUsers: async (parent: User, _: any, context: GraphqlContext) => {
+      if (!context.user) return [];
+      const cachedValue = await redisClient.get(
+        `RECOMMENDED_USERS:${context.user.id}`
+      );
       if (cachedValue) return JSON.parse(cachedValue);
 
-       const myFollowings = await prismaClient.follower.findMany({
-        where:{
-          followers: { id: context.user.id}
+      const myFollowings = await prismaClient.follows.findMany({
+        where: {
+          follower: { id: context.user.id },
         },
-        include:{
-          following: {include:{followers:{include
-          :{following:true}}}}
-        }
-       });
-       const userRecommended:User[] = []
-       for(const followings of myFollowings){
-        for(const followingOfFollowedUser of followings.following.followers){
-          if(followingOfFollowedUser.following.id !==context.user.id &&  myFollowings.findIndex(e=> e?.followingId === followingOfFollowedUser.following.id)<0){
-            userRecommended.push(followingOfFollowedUser.following)
+        include: {
+          following: {
+            include: { followers: { include: { following: true } } },
+          },
+        },
+      });
+      const userRecommended: User[] = [];
+      for (const followings of myFollowings) {
+        for (const followingOfFollowedUser of followings.following.followers) {
+          if (
+            followingOfFollowedUser.following.id !== context.user.id &&
+            myFollowings.findIndex(
+              (e) => e?.followingId === followingOfFollowedUser.following.id
+            ) < 0
+          ) {
+            userRecommended.push(followingOfFollowedUser.following);
           }
         }
-       }
+      }
 
-       await redisClient.set(`RECOMMENDED_USERS:${context.user.id}`, JSON.stringify(userRecommended))
-       return userRecommended;
-    }
+      await redisClient.set(
+        `RECOMMENDED_USERS:${context.user.id}`,
+        JSON.stringify(userRecommended)
+      );
+      return userRecommended;
+    },
+    likedTweets: async (parent: User, _: any, context: GraphqlContext) => {
+      if (!context.user) return [];
+      const likedtweets = await prismaClient.likes.findMany({
+        where: { userId: context.user.id },
+        include: {
+          tweet: true,
+        },
+      });
+      return likedtweets.map((tw) => tw.tweet);
+    },
   },
 };
 
@@ -87,7 +108,7 @@ const mutations = {
     if (!context.user || !context.user.id)
       throw new Error("Unauthenticated user");
     await UserService.followUser(context.user.id, to);
-    await redisClient.del(`RECOMMENDED_USERS:${context.user.id}`)
+    await redisClient.del(`RECOMMENDED_USERS:${context.user.id}`);
     return true;
   },
   unfollowUser: async (
@@ -98,7 +119,49 @@ const mutations = {
     if (!context.user || !context.user.id)
       throw new Error("Unauthenticated user");
     await UserService.unfollowUser(context.user.id, to);
-    await redisClient.del(`RECOMMENDED_USERS:${context.user.id}`)
+    await redisClient.del(`RECOMMENDED_USERS:${context.user.id}`);
+    return true;
+  },
+  likeUser: async (
+    parent: any,
+    { to }: { to: string },
+    context: GraphqlContext
+  ) => {
+    if (!context.user || !context.user.id)
+      throw new Error("Unauthenticated user");
+    try {
+      await prismaClient.likes.create({
+        data: {
+          userId: context.user.id,
+          tweetId: to,
+        },
+      });
+    } catch (error) {
+      console.log(error);
+      throw new Error("Not able to Like Tweet");
+    }
+    return true;
+  },
+  unLikeUser: async (
+    parent: any,
+    { to }: { to: string },
+    context: GraphqlContext
+  ) => {
+    if (!context.user || !context.user.id)
+      throw new Error("Unauthenticated user");
+    try {
+      await prismaClient.likes.delete({
+        where: {
+          tweetId_userId: {
+            tweetId: to,
+            userId: context.user.id,
+          },
+        },
+      });
+    } catch (error) {
+      console.log(error);
+      throw new Error("Not able to Unlike Tweet");
+    }
     return true;
   },
 };

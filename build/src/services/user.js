@@ -56,15 +56,15 @@ class UserService {
         });
     }
     static followUser(from, to) {
-        return db_1.prismaClient.follower.create({
+        return db_1.prismaClient.follows.create({
             data: {
-                followers: { connect: { id: from } },
+                follower: { connect: { id: from } },
                 following: { connect: { id: to } },
             }
         });
     }
     static unfollowUser(from, to) {
-        return db_1.prismaClient.follower.delete({
+        return db_1.prismaClient.follows.delete({
             where: { followerId_followingId: { followerId: from, followingId: to } },
         });
     }

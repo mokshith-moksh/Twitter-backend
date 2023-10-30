@@ -11,16 +11,17 @@ datasource db {
 }
 
 model User {
-  id              String     @id @default(uuid())
+  id              String    @id @default(uuid())
   firstName       String
   lastName        String?
-  email           String     @unique
+  email           String    @unique
   profileImageUrl String?
-  created_at      DateTime   @default(now())
-  updated_at      DateTime   @updatedAt
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
   Tweets          Tweet[]
-  followers       Follower[] @relation("follower")
-  following       Follower[] @relation("following")
+  likedTweets     Likes[]
+  followers       Follows[] @relation("follower")
+  following       Follows[] @relation("following")
 }
 
 model Tweet {
@@ -28,19 +29,32 @@ model Tweet {
   content  String
   imageUrl String?
 
-  Auther User @relation(fields: [autherId], references: [id])
-
+  Auther     User     @relation(fields: [autherId], references: [id])
   autherId   String
+  likes      Likes[]
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 }
 
-model Follower {
-  followers  User   @relation("follower", fields: [followerId], references: [id])
+model Follows {
+  follower   User   @relation("follower", fields: [followerId], references: [id])
   followerId String
 
   following   User   @relation("following", fields: [followingId], references: [id])
   followingId String
 
   @@id([followerId, followingId])
+}
+
+model Likes {
+  
+  tweet   Tweet?  @relation(fields: [tweetId], references: [id])
+  tweetId String
+
+  user   User?   @relation(fields: [userId], references: [id])
+  userId String
+
+  created_at DateTime @default(now())
+  @@id([tweetId,userId])
+
 }

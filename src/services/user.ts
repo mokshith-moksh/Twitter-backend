@@ -66,16 +66,16 @@ class UserService {
     }
 
     public static  followUser(from:string, to:string){
-         return prismaClient.follower.create({
+         return prismaClient.follows.create({
           data:{
-            followers: {connect : {id:from}},
+            follower: {connect : {id:from}},
             following: {connect : {id:to}},
           }
          })
     }
 
     public static unfollowUser(from:string, to:string){
-      return prismaClient.follower.delete({
+      return prismaClient.follows.delete({
         where:{followerId_followingId:{followerId:from,followingId:to}},
       })
     }
