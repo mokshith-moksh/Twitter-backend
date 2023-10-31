@@ -44,6 +44,23 @@ const mutation = {
 const extraResolver = {
     Tweet: {
         auther: (parent) => user_1.default.getUserById(parent.autherId),
+        likes: (parent, args, context) => __awaiter(void 0, void 0, void 0, function* () {
+            try {
+                const likedUsers = yield db_1.prismaClient.likes.findMany({
+                    where: {
+                        tweetId: parent.id
+                    },
+                    include: {
+                        user: true
+                    }
+                });
+                return likedUsers.map((likedUser) => likedUser.user);
+            }
+            catch (error) {
+                console.log(error);
+                throw new Error("not able to fetch liked user");
+            }
+        })
     },
 };
 const queries = {

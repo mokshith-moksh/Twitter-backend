@@ -89,10 +89,10 @@ const extraResolvers = {
                 where: { userId: context.user.id },
                 include: {
                     tweet: true,
-                }
+                },
             });
-            return likedtweets.map(tw => tw.tweet);
-        })
+            return likedtweets.map((tw) => tw.tweet);
+        }),
     },
 };
 const mutations = {
@@ -113,25 +113,37 @@ const mutations = {
     likeUser: (parent, { to }, context) => __awaiter(void 0, void 0, void 0, function* () {
         if (!context.user || !context.user.id)
             throw new Error("Unauthenticated user");
-        yield db_1.prismaClient.likes.create({
-            data: {
-                userId: context.user.id,
-                tweetId: to,
-            },
-        });
+        try {
+            yield db_1.prismaClient.likes.create({
+                data: {
+                    userId: context.user.id,
+                    tweetId: to,
+                },
+            });
+        }
+        catch (error) {
+            console.log(error);
+            throw new Error("Not able to Like Tweet");
+        }
         return true;
     }),
     unLikeUser: (parent, { to }, context) => __awaiter(void 0, void 0, void 0, function* () {
         if (!context.user || !context.user.id)
             throw new Error("Unauthenticated user");
-        yield db_1.prismaClient.likes.delete({
-            where: {
-                tweetId_userId: {
-                    tweetId: to,
-                    userId: context.user.id,
+        try {
+            yield db_1.prismaClient.likes.delete({
+                where: {
+                    tweetId_userId: {
+                        tweetId: to,
+                        userId: context.user.id,
+                    },
                 },
-            },
-        });
+            });
+        }
+        catch (error) {
+            console.log(error);
+            throw new Error("Not able to Unlike Tweet");
+        }
         return true;
     }),
 };
