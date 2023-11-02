@@ -16,6 +16,8 @@ exports.resolvers = void 0;
 const db_1 = require("../../client/db");
 const user_1 = __importDefault(require("../../services/user"));
 const redis_1 = require("../../client/redis");
+const supabase_js_1 = require("@supabase/supabase-js");
+const supabaseClient = (0, supabase_js_1.createClient)(process.env.DATABASE_URI, process.env.SUPER_BASE_ANON_KEY);
 const queries = {
     verifyGoogleToken: (parent, { token }, context) => __awaiter(void 0, void 0, void 0, function* () {
         const AuthToken = yield user_1.default.verifyGoogleAuthToken(token);
@@ -31,6 +33,21 @@ const queries = {
     }),
     getUserById: (parent, { id }, context) => __awaiter(void 0, void 0, void 0, function* () {
         return yield user_1.default.getUserById(id);
+    }),
+    getAllUser: (parent, { id }, context) => __awaiter(void 0, void 0, void 0, function* () {
+        return yield db_1.prismaClient.user.findMany();
+    }),
+    getSearchUser: (parent, { searchQuery }, context) => __awaiter(void 0, void 0, void 0, function* () {
+        const { data: filteredMoviesData, error } = yield supabaseClient
+            .from('User')
+            .select('*')
+            .textSearch('firstName', searchQuery);
+        if (error) {
+            // Handle any errors here
+            console.log(error);
+            throw new Error('Failed to perform the text search');
+        }
+        return filteredMoviesData;
     }),
 };
 const extraResolvers = {

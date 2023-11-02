@@ -3,7 +3,10 @@ import { GraphqlContext } from "../../interfaces";
 import { User } from "@prisma/client";
 import UserService from "../../services/user";
 import { redisClient } from "../../client/redis";
+import { createClient } from '@supabase/supabase-js'
 
+const supabaseClient = createClient(process.env.DATABASE_URI as string, process.env.SUPER_BASE_ANON_KEY as string)
+ 
 const queries = {
   verifyGoogleToken: async (
     parent: any,
@@ -25,6 +28,31 @@ const queries = {
     context: GraphqlContext
   ) => {
     return await UserService.getUserById(id);
+  },
+  getAllUser: async (
+    parent: any,
+    { id }: { id: string },
+    context: GraphqlContext
+  ) => {
+    return await prismaClient.user.findMany()
+  },
+  getSearchUser:async (
+    parent: any,
+    { searchQuery }: { searchQuery: string },
+    context: GraphqlContext
+  ) => {
+    const { data: filteredMoviesData, error } = await supabaseClient
+    .from('User')
+    .select('*')
+    .textSearch('firstName', searchQuery);
+
+    if (error) {
+      // Handle any errors here
+      console.log(error)
+      throw new Error('Failed to perform the text search');
+    }
+  
+    return filteredMoviesData;
   },
 };
 const extraResolvers = {
