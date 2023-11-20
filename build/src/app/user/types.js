@@ -16,5 +16,4 @@ type User{
   likedTweets: [Tweet]
   tweets: [Tweet]
 } 
-
 `;
